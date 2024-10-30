@@ -1,6 +1,7 @@
 package com.zencode.book.book;
 
 import com.zencode.book.user.User;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -17,5 +18,11 @@ public class BookService {
         Book book = bookMapper.toBook(bookRequest);
         book.setOwner(user);
         return bookRepository.save(book).getId();
+    }
+
+    public BookResponse findById(Long bookId) {
+        return bookRepository.findById(bookId)
+                .map(bookMapper::toBookResponse)
+                .orElseThrow(() -> new EntityNotFoundException("No book found with with ID:: " + bookId));
     }
 }
