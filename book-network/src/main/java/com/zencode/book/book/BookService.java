@@ -1,6 +1,7 @@
 package com.zencode.book.book;
 
 import com.zencode.book.common.PageResponse;
+import com.zencode.book.exception.OperationNotPermittedException;
 import com.zencode.book.history.BookTransactionHistory;
 import com.zencode.book.history.BookTransactionHistoryRepository;
 import com.zencode.book.user.User;
@@ -14,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -110,5 +112,20 @@ public class BookService {
                 allBorrowedBooks.isFirst(),
                 allBorrowedBooks.isLast()
         );
+    }
+
+    public Long updateShareableStatus(Long bookId, Authentication connectedUser) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("No book found with ID :: " + bookId));
+        User user = (User) connectedUser.getPrincipal();
+
+        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot update others book shareable status");
+        }
+
+        book.setShareable(!book.isShareable());
+        bookRepository.save(book);
+
+        return bookId;
     }
 }
